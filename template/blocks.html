@@ -1,0 +1,8 @@
+{{ block "rules" .Rules }}
+    <ul>
+        {{ range . }}
+        <li> {{ . }} </li>
+
+        {{ end }}
+    </ul>
+{{ end }}

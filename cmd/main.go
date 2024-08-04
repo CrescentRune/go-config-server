@@ -8,15 +8,24 @@ import (
 
 const STATIC_DIR = "../static"
 
-type Rules map[string] string
+type RuleIndex map[string] string
 
-var rules Rules
+var rules RuleIndex
 
-func GetRules() Rules {
+func GetRuleIndex() RuleIndex {
     return map[string] string{
         "meep[ea]meep": "/config/config.json",
         "crumbo.biz": "/config/config.test.json",
     }
+}
+
+func handlePostRule(w http.ResponseWriter, req *http.Request) {
+    defer req.Body.Close()
+    
+    log.Printf("=== POST /rule request made")
+    log.Printf("   %v", req)
+
+    w.WriteHeader(http.StatusOK)
 }
 
 
@@ -44,11 +53,13 @@ func handleFileRequest(w http.ResponseWriter, req *http.Request) {
 
 func main() {
    
-    rules = GetRules()
+    rules = GetRuleIndex()
 
     log.Printf("Config server has started\n")
 
     http.Handle("/config/*", http.HandlerFunc(handleFileRequest))
+    
+    http.Handle("POST /rule", http.HandlerFunc(handlePostRule))
 
     if err := http.ListenAndServe(":46101", nil); err != nil {
         panic("Oh no!")
