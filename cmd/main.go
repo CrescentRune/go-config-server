@@ -1,11 +1,22 @@
 package main
 
 import (
-    "net/http"
-    "log"
+	"log"
+	"net/http"
 )
 
 const STATIC_DIR = "../static"
+
+type Rules map[string] string
+
+var rules Rules
+
+func GetRules() Rules {
+    return map[string] string{
+        "google.com": "/config/config.json",
+        "crumbo.biz": "/config/config.test.json",
+    }
+}
 
 
 func handleFileRequest(w http.ResponseWriter, req *http.Request) {
@@ -17,11 +28,19 @@ func handleFileRequest(w http.ResponseWriter, req *http.Request) {
     log.Printf("   File requested: %v", configFilePath)
 
     //Actual, check no overriding rules apply, and access is permitted
+    if override := rules[req.Host]; override != "" {
+        configFilePath = STATIC_DIR + override
+        log.Printf("   File mapped to: %v", configFilePath)
+    }
+
 
     http.ServeFile(w, req, configFilePath)
 }
 
 func main() {
+   
+    rules = GetRules()
+
     log.Printf("Config server has started\n")
 
     http.Handle("/config/*", http.HandlerFunc(handleFileRequest))
