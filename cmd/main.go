@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"regexp"
 )
 
 const STATIC_DIR = "../static"
@@ -13,7 +14,7 @@ var rules Rules
 
 func GetRules() Rules {
     return map[string] string{
-        "google.com": "/config/config.json",
+        "meep[ea]meep": "/config/config.json",
         "crumbo.biz": "/config/config.test.json",
     }
 }
@@ -28,11 +29,15 @@ func handleFileRequest(w http.ResponseWriter, req *http.Request) {
     log.Printf("   File requested: %v", configFilePath)
 
     //Actual, check no overriding rules apply, and access is permitted
-    if override := rules[req.Host]; override != "" {
-        configFilePath = STATIC_DIR + override
-        log.Printf("   File mapped to: %v", configFilePath)
+    for key, val := range rules {
+        if res, err := regexp.MatchString(key, req.Host); err != nil {
+            //Unreachable due to checking when loading rules
+            panic("Should not occur")
+        } else if res {
+            configFilePath = STATIC_DIR + val
+            log.Printf("   File mapped to: %v", configFilePath)
+        }
     }
-
 
     http.ServeFile(w, req, configFilePath)
 }
